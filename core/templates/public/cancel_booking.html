@@ -1,0 +1,60 @@
+{% extends 'base_public.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 border-top border-5 border-danger">
+                <div class="card-header bg-white text-center pt-4">
+                    <div class="text-danger mb-2">
+                        <i class="fas fa-exclamation-circle fa-3x"></i>
+                    </div>
+                    <h3 class="fw-bold">Cancel Booking?</h3>
+                    <p class="text-muted">PNR: {{ booking_id }}</p>
+                </div>
+                
+                <div class="card-body p-4">
+                    <div class="alert alert-warning">
+                        <small><i class="fas fa-info-circle"></i> Cancellation is irreversible. Seats will be released immediately.</small>
+                    </div>
+
+                    <h5 class="border-bottom pb-2">Refund Calculation</h5>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total Paid ({{ ticket_count }} Passengers)</span>
+                        <span class="fw-bold">₹{{ total_paid }}</span>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-2 text-danger">
+                        <span>Less: Cancellation Fee</span>
+                        <span>- ₹{{ cancellation_fee }}</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <span class="h5 mb-0">Net Refund Amount</span>
+                        <span class="h4 text-success fw-bold mb-0">₹{{ refund_amount }}</span>
+                    </div>
+
+                    <p class="text-muted small text-center mb-4">
+                        The refund amount will be credited to your original payment source within 2-3 business days.
+                    </p>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger btn-lg fw-bold">
+                                Confirm Cancellation
+                            </button>
+                            <a href="{% url 'customer_bookings' %}" class="btn btn-outline-secondary">
+                                Go Back (Don't Cancel)
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

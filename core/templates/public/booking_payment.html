@@ -1,0 +1,60 @@
+{% extends 'base_public.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0">Confirm & Pay</h4>
+                </div>
+                <div class="card-body p-4">
+                    
+                    <h5 class="border-bottom pb-2">Flight Details</h5>
+                    <p><strong>Flight:</strong> {{ flight.flight_number }}</p>
+                    <p><strong>Route:</strong> {{ flight.origin }} ➝ {{ flight.destination }}</p>
+                    <p><strong>Date:</strong> {{ flight.departure_time|date:"D, d M Y, H:i" }}</p>
+
+                    <h5 class="border-bottom pb-2 mt-4">Passengers</h5>
+                    <ul class="list-group mb-4">
+                        {% for p in passenger_data %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ p.name }}</strong>
+                                <br><small class="text-muted">Seat {{ p.seat }}</small>
+                            </div>
+                            <span class="text-primary">₹{{ flight.base_price }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+
+                    <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded">
+                        <h4 class="mb-0">Total Amount:</h4>
+                        <h3 class="mb-0 text-success fw-bold">₹{{ total_price }}</h3>
+                    </div>
+
+                    <!-- Dummy Payment Form -->
+                    <div class="mt-4">
+                        <label class="form-label text-muted">Select Payment Method (Dummy)</label>
+                        <div class="btn-group w-100 mb-3" role="group">
+                            <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
+                            <label class="btn btn-outline-secondary" for="btnradio1">Credit Card</label>
+
+                            <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+                            <label class="btn btn-outline-secondary" for="btnradio2">UPI</label>
+                        </div>
+
+                        <form method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success w-100 btn-lg shadow">
+                                Pay ₹{{ total_price }} & Confirm Booking
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

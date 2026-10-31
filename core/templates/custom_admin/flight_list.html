@@ -1,0 +1,53 @@
+{% extends 'base_admin.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Flight Management</h2>
+    <a href="{% url 'admin_flight_add' %}" class="btn btn-primary">+ Schedule New Flight</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Flight #</th>
+                        <th>Route</th>
+                        <th>Schedule</th>
+                        <th>Aircraft</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for flight in flights %}
+                    <tr>
+                        <td class="fw-bold">{{ flight.flight_number }}</td>
+                        <td>
+                            {{ flight.origin }} <br>
+                            <small class="text-muted">to</small> <br>
+                            {{ flight.destination }}
+                        </td>
+                        <td>
+                            <small class="text-success">Dep: {{ flight.departure_time|date:"M d, H:i" }}</small><br>
+                            <small class="text-danger">Arr: {{ flight.arrival_time|date:"M d, H:i" }}</small>
+                        </td>
+                        <td>{{ flight.aircraft.name }}</td>
+                        <td>{{ flight.base_price }}</td>
+                        <td>
+                            <a href="{% url 'admin_flight_edit' flight.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            <a href="{% url 'admin_flight_delete' flight.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No flights scheduled yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

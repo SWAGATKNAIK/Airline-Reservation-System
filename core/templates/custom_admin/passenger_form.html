@@ -1,0 +1,27 @@
+{% extends 'base_admin.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">{{ title }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <!-- Standard form rendering -->
+                        {{ form.as_p }}
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'admin_passenger_list' %}" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-success">Save Passenger</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

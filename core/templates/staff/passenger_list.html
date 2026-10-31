@@ -1,0 +1,77 @@
+{% extends 'base_staff.html' %}
+
+{% block content %}
+<!-- Include FontAwesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="mb-1">Passenger Manifest</h3>
+        <p class="text-muted mb-0">Flight: <strong>{{ flight.flight_number }}</strong> | {{ flight.departure_time|date:"d M Y, H:i" }}</p>
+    </div>
+    <a href="{% url 'staff_dashboard' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Seat</th>
+                        <th>Passenger Name</th>
+                        <th>PNR</th>
+                        <th>Status</th>
+                        <th>Check-In</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for res in reservations %}
+                    <tr class="{% if res.is_checked_in %}table-success{% endif %}">
+                        <td class="ps-4">
+                            <span class="badge bg-secondary">{{ res.seat_number }}</span>
+                        </td>
+                        <td class="fw-bold">{{ res.passenger_name }}</td>
+                        <td class="text-primary">{{ res.booking_id }}</td>
+                        <td>
+                            <span class="badge bg-success">Confirmed</span>
+                        </td>
+                        <td>
+                            {% if res.is_checked_in %}
+                                <span class="badge bg-success"><i class="fas fa-check"></i> Checked In</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                                <!-- Check-In Toggle Button -->
+                                <a href="{% url 'staff_toggle_checkin' res.id %}" class="btn btn-sm {% if res.is_checked_in %}btn-outline-danger{% else %}btn-success{% endif %}">
+                                    {% if res.is_checked_in %}
+                                        Undo Check-In
+                                    {% else %}
+                                        Check In
+                                    {% endif %}
+                                </a>
+                                
+                                <!-- Print Boarding Pass Button -->
+                                <a href="{% url 'staff_boarding_pass' res.id %}" target="_blank" class="btn btn-sm btn-outline-dark" title="Print Boarding Pass">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">No confirmed passengers for this flight yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

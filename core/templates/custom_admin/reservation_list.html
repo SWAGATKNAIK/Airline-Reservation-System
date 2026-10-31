@@ -1,0 +1,72 @@
+{% extends 'base_admin.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Bookings & Tickets</h2>
+</div>
+
+<!-- Search Bar -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-10">
+                <input type="text" name="q" class="form-control" placeholder="Search by PNR, Passenger Name, Flight No, or Date (YYYY-MM-DD)..." value="{{ query|default:'' }}">
+            </div>
+            <div class="col-md-2 d-grid">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>PNR (Booking ID)</th>
+                        <th>Passenger Name</th>
+                        <th>Flight</th>
+                        <th>Seat</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for res in reservations %}
+                    <tr>
+                        <td class="fw-bold text-primary">{{ res.booking_id }}</td>
+                        <td>
+                            {{ res.passenger_name }}<br>
+                            <small class="text-muted">Booked by: {{ res.passenger.username }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-info text-dark">{{ res.flight.flight_number }}</span>
+                            <br><small>{{ res.flight.origin }} ➝ {{ res.flight.destination }}</small>
+                        </td>
+                        <td><span class="badge bg-warning text-dark">{{ res.seat_number }}</span></td>
+                        <td>{{ res.flight.departure_time|date:"d M Y" }}</td>
+                        <td>
+                            {% if res.status == 'CONFIRMED' %}
+                                <a href="{% url 'admin_boarding_pass' res.booking_id %}" target="_blank" class="btn btn-sm btn-outline-dark">
+                                    🖨️ Boarding Pass
+                                </a>
+                            {% elif res.status == 'CANCELLED' %}
+                                <span class="badge bg-danger">CANCELLED</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ res.status }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">No bookings found matching your search.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

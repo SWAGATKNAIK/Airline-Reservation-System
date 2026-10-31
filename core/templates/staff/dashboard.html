@@ -1,0 +1,95 @@
+{% extends 'base_staff.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="fas fa-tachometer-alt"></i> Today's Overview</h3>
+    <span class="text-muted">{{ today_date|date:"l, d F Y" }}</span>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white shadow-sm">
+            <div class="card-body">
+                <h2 class="mb-0">{{ total_flights }}</h2>
+                <small>Flights Today</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white shadow-sm">
+            <div class="card-body">
+                <h2 class="mb-0">{{ checked_in_count }} / {{ passengers_today }}</h2>
+                <small>Passengers Checked In</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark shadow-sm">
+            <div class="card-body">
+                <h2 class="mb-0">{{ delayed_flights }}</h2>
+                <small>Delayed Flights</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white shadow-sm">
+            <div class="card-body">
+                <h2 class="mb-0">{{ today_date|date:"H:i" }}</h2>
+                <small>Current Time</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Flight Schedule Table -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Upcoming Departures (24h)</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Flight</th>
+                    <th>Route</th>
+                    <th>Time</th>
+                    <th>Gate</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flight in flights %}
+                <tr>
+                    <td class="fw-bold text-primary">{{ flight.flight_number }}</td>
+                    <td>{{ flight.origin }} ➝ {{ flight.destination }}</td>
+                    <td>{{ flight.departure_time|date:"H:i" }}</td>
+                    <td class="fw-bold">{{ flight.gate }}</td>
+                    <td>
+                        {% if flight.status == 'ON TIME' %}
+                            <span class="badge bg-success">On Time</span>
+                        {% elif flight.status == 'DELAYED' %}
+                            <span class="badge bg-danger">Delayed</span>
+                        {% elif flight.status == 'BOARDING' %}
+                            <span class="badge bg-warning text-dark">Boarding</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ flight.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'staff_flight_passengers' flight.id %}" class="btn btn-sm btn-outline-primary">
+                            View Manifest
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">No flights scheduled for the next 24 hours.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

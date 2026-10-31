@@ -1,0 +1,25 @@
+{% extends 'base_admin.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger shadow">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">Confirm Deletion</h4>
+                </div>
+                <div class="card-body text-center">
+                    <p class="lead">Are you sure you want to remove <strong>{{ aircraft.name }} ({{ aircraft.code }})</strong>?</p>
+                    <p class="text-muted">Warning: This might delete all flights associated with this aircraft!</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <a href="{% url 'admin_aircraft_list' %}" class="btn btn-secondary me-2">Cancel</a>
+                        <button type="submit" class="btn btn-danger">Yes, Delete Aircraft</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
