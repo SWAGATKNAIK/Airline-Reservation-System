@@ -1,0 +1,44 @@
+{% extends 'base_admin.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Aircraft Management</h2>
+    <a href="{% url 'admin_aircraft_add' %}" class="btn btn-primary">+ Add New Aircraft</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Code</th>
+                    <th>Model Name</th>
+                    <th>Economy Seats</th>
+                    <th>Business Seats</th>
+                    <th>Total Capacity</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for plane in aircrafts %}
+                <tr>
+                    <td class="fw-bold">{{ plane.code }}</td>
+                    <td>{{ plane.name }}</td>
+                    <td>{{ plane.total_economy_seats }}</td>
+                    <td>{{ plane.total_business_seats }}</td>
+                    <td><span class="badge bg-secondary">{{ plane.total_economy_seats|add:plane.total_business_seats }}</span></td>
+                    <td>
+                        <a href="{% url 'admin_aircraft_edit' plane.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        <a href="{% url 'admin_aircraft_delete' plane.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">No aircrafts added yet.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

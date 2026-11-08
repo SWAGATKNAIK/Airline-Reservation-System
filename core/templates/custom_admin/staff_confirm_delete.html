@@ -1,0 +1,25 @@
+{% extends 'base_admin.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger shadow">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">Revoke Access</h4>
+                </div>
+                <div class="card-body text-center">
+                    <p class="lead">Are you sure you want to remove <strong>{{ staff.get_full_name }} ({{ staff.username }})</strong>?</p>
+                    <p class="text-muted">They will no longer be able to log in to the staff portal.</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <a href="{% url 'admin_staff_list' %}" class="btn btn-secondary me-2">Cancel</a>
+                        <button type="submit" class="btn btn-danger">Yes, Delete Account</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'base_public.html' %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Messages Block for Success/Error -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <h2 class="mb-4">My Bookings</h2>
+
+    <div class="card shadow border-0">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>PNR</th>
+                            <th>Passenger</th>
+                            <th>Flight Details</th>
+                            <th>Travel Date</th>
+                            <th>Seat</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                        <tr>
+                            <td class="fw-bold text-primary">{{ booking.booking_id }}</td>
+                            <td>{{ booking.passenger_name }}</td>
+                            <td>
+                                <strong>{{ booking.flight.flight_number }}</strong><br>
+                                <small class="text-muted">{{ booking.flight.origin }} ➝ {{ booking.flight.destination }}</small>
+                            </td>
+                            <td>
+                                {{ booking.flight.departure_time|date:"d M Y" }}<br>
+                                <small class="text-muted">{{ booking.flight.departure_time|date:"H:i" }}</small>
+                            </td>
+                            <td><span class="badge bg-secondary">{{ booking.seat_number }}</span></td>
+                            <td>
+                                {% if booking.status == 'CONFIRMED' %}
+                                    <span class="badge bg-success">Confirmed</span>
+                                {% elif booking.status == 'CANCELLED' %}
+                                    <span class="badge bg-danger">Cancelled</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">{{ booking.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if booking.status == 'CONFIRMED' %}
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'customer_boarding_pass' booking.booking_id %}" target="_blank" class="btn btn-sm btn-outline-primary fw-bold" title="Download Ticket">
+                                            <i class="fas fa-ticket-alt"></i> Ticket
+                                        </a>
+                                        <a href="{% url 'cancel_booking' booking.booking_id %}" class="btn btn-sm btn-outline-danger fw-bold" title="Cancel Booking">
+                                            <i class="fas fa-times-circle"></i> Cancel
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">No actions available</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <h4 class="text-muted">No bookings found.</h4>
+                                <a href="{% url 'search_flights' %}" class="btn btn-primary mt-2">Book a Flight</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

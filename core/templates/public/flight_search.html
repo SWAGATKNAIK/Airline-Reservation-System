@@ -1,0 +1,114 @@
+{% extends 'base_public.html' %}
+
+{% block content %}
+<div class="container my-5">
+    
+    <!-- Search Box Section -->
+    <div class="card shadow-lg mb-5 border-0">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">✈️ Find Your Flight</h4>
+        </div>
+        <div class="card-body bg-light">
+            <form method="get" action="{% url 'search_flights' %}">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">From</label>
+                        {{ form.origin }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">To</label>
+                        {{ form.destination }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold">Date of Travel</label>
+                        {{ form.date }}
+                    </div>
+                    <div class="col-md-1 d-grid">
+                        <button type="submit" class="btn btn-warning fw-bold">Search</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Search Results Section -->
+    {% if searched %}
+        <h3 class="mb-4">Search Results</h3>
+        
+        <div class="row">
+            {% for flight in flights %}
+                <div class="col-12 mb-3">
+                    <div class="card shadow-sm border-start border-5 border-primary h-100 hover-shadow transition">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                
+                                <!-- Airline Info -->
+                                <div class="col-md-2 text-center">
+                                    <div class="fs-1">✈️</div>
+                                    <small class="text-muted">{{ flight.aircraft.name }}</small><br>
+                                    <span class="badge bg-secondary">{{ flight.flight_number }}</span>
+                                </div>
+
+                                <!-- Route & Time -->
+                                <div class="col-md-5">
+                                    <div class="d-flex justify-content-between align-items-center text-center">
+                                        <div>
+                                            <h4 class="mb-0">{{ flight.departure_time|date:"H:i" }}</h4>
+                                            <p class="text-muted mb-0">{{ flight.origin }}</p>
+                                        </div>
+                                        <div class="px-3 text-muted">
+                                            <small>------------ ➔ ------------</small>
+                                        </div>
+                                        <div>
+                                            <h4 class="mb-0">{{ flight.arrival_time|date:"H:i" }}</h4>
+                                            <p class="text-muted mb-0">{{ flight.destination }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-center mt-2">
+                                        <small class="text-success">{{ flight.departure_time|date:"D, M d, Y" }}</small>
+                                    </div>
+                                </div>
+
+                                <!-- Price -->
+                                <div class="col-md-3 text-center border-start border-end">
+                                    <small class="text-muted">Price per person</small>
+                                    <h3 class="text-primary fw-bold mb-0">₹{{ flight.base_price }}</h3>
+                                    <small class="text-muted">Economy Class</small>
+                                </div>
+
+                                <!-- Book Action -->
+                                <div class="col-md-2 text-center">
+                                    <!-- Placeholder for Book Button - We will activate this in the next step -->
+                                    <a href="{% url 'book_flight_seats' flight.id %}" class="btn btn-danger w-100 py-2 fw-bold">Book Now</a>
+                                <small class="d-block mt-2 text-muted">{{ flight.available_seats }} Seats Left</small>   
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-warning text-center" role="alert">
+                        <h4>No flights found matching your criteria.</h4>
+                        <p>Try changing your dates or checking the spelling of cities.</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% elif not searched %}
+        <div class="text-center py-5">
+            <h2 class="text-muted">Where do you want to go?</h2>
+            <p>Enter your details above to start your journey.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .hover-shadow:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+        transition: all 0.3s ease;
+    }
+</style>
+{% endblock %}

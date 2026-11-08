@@ -1,0 +1,47 @@
+{% extends 'base_public.html' %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section text-center">
+    <div class="container">
+        <h1 class="display-4 fw-bold">Fly Beyond Limits</h1>
+        <p class="lead">Experience comfort, luxury, and speed with SkyHigh Airlines.</p>
+        
+        <div class="mt-4">
+            <!-- Updated Buttons -->
+            <a href="{% url 'search_flights' %}" class="btn btn-warning btn-lg px-5 fw-bold shadow">Book a Flight</a>
+            
+            {% if not user.is_authenticated %}
+                <a href="{% url 'signup' %}" class="btn btn-outline-light btn-lg ms-2">Join Us</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container my-5">
+    <div class="row text-center">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 h-100">
+                <div class="display-4 mb-2">🌍</div>
+                <h5>Global Destinations</h5>
+                <p>We connect you to over 100 destinations worldwide.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 h-100">
+                <div class="display-4 mb-2">🛡️</div>
+                <h5>Safe & Secure</h5>
+                <p>Your safety is our top priority with state-of-the-art aircraft.</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 h-100">
+                <div class="display-4 mb-2">🤖</div>
+                <h5>AI Assistance</h5>
+                <p>24/7 Support with our integrated Smart Chatbot.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

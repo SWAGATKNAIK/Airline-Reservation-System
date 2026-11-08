@@ -1,0 +1,411 @@
+{% extends 'base_public.html' %}
+
+{% block content %}
+<!-- FontAwesome for Seat Icons -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+<div class="container my-5">
+    <div class="row">
+        <!-- Info Sidebar (Left) -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow border-0 mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-plane"></i> Flight Summary</h5>
+                </div>
+                <div class="card-body">
+                    <h4 class="fw-bold text-primary">{{ flight.flight_number }}</h4>
+                    <p class="mb-1 fw-bold">{{ flight.origin }} <i class="fas fa-long-arrow-alt-right mx-2 text-muted"></i> {{ flight.destination }}</p>
+                    <p class="text-muted"><i class="far fa-clock"></i> {{ flight.departure_time|date:"D, d M, H:i" }}</p>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Aircraft</span>
+                        <span class="fw-bold">{{ flight.aircraft.name }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <span>Class</span>
+                        <span class="badge bg-info text-dark">Economy</span>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                     <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Total Price</span>
+                        <h3 class="text-success mb-0" id="priceDisplay">₹0</h3>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow border-0">
+                <div class="card-body">
+                    <h6 class="text-uppercase text-muted mb-3" style="font-size: 12px; letter-spacing: 1px;">Seat Legend</h6>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="legend-box available"></div> 
+                        <span>Available <small class="text-muted">(₹{{ flight.base_price }})</small></span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="legend-box selected"></div> 
+                        <span>Selected</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="legend-box booked"></div> 
+                        <span>Occupied</span>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" id="seatForm" class="mt-4">
+                {% csrf_token %}
+                <input type="hidden" name="selected_seats" id="selectedSeatsInput">
+                <button type="submit" class="btn btn-warning w-100 btn-lg shadow fw-bold p-3" id="nextBtn" disabled>
+                    Select Seats to Proceed
+                </button>
+            </form>
+        </div>
+
+        <!-- Plane UI (Right) -->
+        <div class="col-lg-8">
+            <div class="plane-container">
+                <!-- Wings -->
+                <div class="wing left-wing"></div>
+                <div class="wing right-wing"></div>
+
+                <!-- Fuselage -->
+                <div class="fuselage">
+                    <!-- Cockpit -->
+                    <div class="cockpit">
+                        <div class="window"></div>
+                        <i class="fas fa-user-tie text-muted" style="font-size: 24px;"></i>
+                        <small class="d-block text-muted mt-1">COCKPIT</small>
+                    </div>
+
+                    <!-- Cabin -->
+                    <div class="cabin">
+                        <!-- Column Headers -->
+                        <div class="row-labels mb-3">
+                            <span>A</span><span>B</span><span>C</span>
+                            <span class="aisle-spacer"></span>
+                            <span>D</span><span>E</span><span>F</span>
+                        </div>
+
+                        {% for row in seat_map %}
+                            <div class="seat-row {% if forloop.counter == 10 or forloop.counter == 11 %}exit-row{% endif %}">
+                                <!-- Row Number (Left) -->
+                                <div class="row-number">{{ row.row_num }}</div>
+
+                                <!-- Left Side (A, B, C) -->
+                                <div class="seat-group">
+                                    {% for seat in row.seats|slice:":3" %}
+                                        <div class="seat-wrapper" data-bs-toggle="tooltip" title="Seat {{ seat.label }}">
+                                            <input type="checkbox" id="seat-{{ seat.label }}" class="seat-checkbox" 
+                                                   value="{{ seat.label }}" 
+                                                   {% if seat.is_booked %}disabled{% endif %}>
+                                            <label for="seat-{{ seat.label }}" class="seat-label {% if seat.is_booked %}booked{% endif %}">
+                                                <span class="seat-name">{{ seat.label|slice:"1:" }}</span>
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <!-- Aisle -->
+                                <div class="aisle">
+                                    {% if forloop.counter == 10 %}
+                                        <small class="text-danger fw-bold" style="font-size: 10px; writing-mode: vertical-rl; transform: rotate(180deg);">EXIT</small>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Right Side (D, E, F) -->
+                                <div class="seat-group">
+                                    {% for seat in row.seats|slice:"3:" %}
+                                        <div class="seat-wrapper" data-bs-toggle="tooltip" title="Seat {{ seat.label }}">
+                                            <input type="checkbox" id="seat-{{ seat.label }}" class="seat-checkbox" 
+                                                   value="{{ seat.label }}" 
+                                                   {% if seat.is_booked %}disabled{% endif %}>
+                                            <label for="seat-{{ seat.label }}" class="seat-label {% if seat.is_booked %}booked{% endif %}">
+                                                <span class="seat-name">{{ seat.label|slice:"1:" }}</span>
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                
+                                <!-- Row Number (Right) -->
+                                <div class="row-number">{{ row.row_num }}</div>
+                            </div>
+
+                            <!-- Visual Exit Row Gap -->
+                            {% if forloop.counter == 10 %}
+                                <div class="exit-row-gap">
+                                    <span class="text-danger fw-bold">EMERGENCY EXIT</span>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Tail -->
+                    <div class="tail"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS Styling -->
+<style>
+    :root {
+        --seat-available: #e3f2fd;
+        --seat-available-border: #90caf9;
+        --seat-selected: #4caf50;
+        --seat-booked: #e0e0e0;
+        --seat-booked-icon: #9e9e9e;
+        --fuselage-bg: #fff;
+        --fuselage-border: #cfd8dc;
+    }
+
+    .plane-container {
+        position: relative;
+        padding: 40px 60px; /* Space for wings */
+        display: flex;
+        justify-content: center;
+        background-color: #f8f9fa; /* Tarmac color */
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    /* Wings */
+    .wing {
+        position: absolute;
+        width: 200px;
+        height: 300px;
+        background-color: #e0e0e0;
+        border: 2px solid #bdc3c7;
+        z-index: 1;
+        top: 400px; /* Adjust based on where you want wings */
+    }
+
+    .left-wing {
+        left: -80px;
+        transform: skewY(20deg);
+        border-radius: 0 0 0 80%;
+    }
+
+    .right-wing {
+        right: -80px;
+        transform: skewY(-20deg);
+        border-radius: 0 0 80% 0;
+    }
+
+    /* Fuselage (Body) */
+    .fuselage {
+        position: relative;
+        width: 380px;
+        background-color: var(--fuselage-bg);
+        border: 4px solid var(--fuselage-border);
+        border-radius: 150px 150px 50px 50px; /* Nose shape */
+        padding: 40px 20px 60px 20px;
+        z-index: 2;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    /* Cockpit */
+    .cockpit {
+        text-align: center;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 20px;
+    }
+    .cockpit .window {
+        width: 120px;
+        height: 40px;
+        background: #2c3e50;
+        margin: 0 auto 10px auto;
+        border-radius: 20px 20px 5px 5px;
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        border: 2px solid #bdc3c7;
+    }
+
+    /* Seat Layout */
+    .row-labels {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 10px;
+        font-weight: bold;
+        color: #7f8c8d;
+    }
+    .row-labels span {
+        width: 40px;
+        text-align: center;
+    }
+    .aisle-spacer { width: 30px; }
+
+    .seat-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+
+    .seat-group {
+        display: flex;
+        gap: 6px;
+    }
+
+    .aisle {
+        width: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .row-number {
+        width: 25px;
+        text-align: center;
+        font-size: 10px;
+        color: #bdc3c7;
+        font-weight: bold;
+    }
+
+    /* Individual Seat Styling */
+    .seat-wrapper { position: relative; }
+
+    .seat-checkbox { display: none; }
+
+    .seat-label {
+        display: block;
+        width: 40px;
+        height: 50px;
+        background-color: var(--seat-available);
+        border: 1px solid var(--seat-available-border);
+        border-radius: 8px 8px 12px 12px;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s;
+        box-shadow: 0 2px 0 #b3e5fc;
+    }
+
+    /* Armrests */
+    .seat-label::before, .seat-label::after {
+        content: '';
+        position: absolute;
+        bottom: 5px;
+        width: 4px;
+        height: 20px;
+        background-color: rgba(0,0,0,0.1);
+        border-radius: 2px;
+    }
+    .seat-label::before { left: -2px; }
+    .seat-label::after { right: -2px; }
+
+    /* Seat Headrest */
+    .seat-label::before {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: 5px;
+        right: 5px;
+        height: 6px;
+        background-color: rgba(255,255,255,0.5);
+        border-radius: 4px;
+        z-index: 1;
+    }
+
+    /* Seat States */
+    .seat-label:hover {
+        transform: translateY(-2px);
+        background-color: #bbdefb;
+    }
+
+    .seat-checkbox:checked + .seat-label {
+        background-color: var(--seat-selected);
+        border-color: #388e3c;
+        box-shadow: 0 2px 0 #2e7d32;
+        color: white;
+    }
+
+    .seat-label.booked {
+        background-color: var(--seat-booked);
+        border-color: #bdbdbd;
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+    
+    .seat-label.booked::after {
+        content: '×';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 20px;
+        color: var(--seat-booked-icon);
+    }
+
+    .seat-name {
+        display: none; /* Hide seat letter inside the seat for cleaner look */
+    }
+
+    /* Legend Box */
+    .legend-box {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        margin-right: 10px;
+    }
+    .legend-box.available { background-color: var(--seat-available); border: 1px solid var(--seat-available-border); }
+    .legend-box.selected { background-color: var(--seat-selected); }
+    .legend-box.booked { background-color: var(--seat-booked); }
+
+    /* Exit Row Special Styling */
+    .exit-row-gap {
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-image: repeating-linear-gradient(
+            45deg,
+            rgba(255,0,0,0.05),
+            rgba(255,0,0,0.05) 10px,
+            transparent 10px,
+            transparent 20px
+        );
+        margin: 5px 0;
+        border-top: 1px dashed #ef9a9a;
+        border-bottom: 1px dashed #ef9a9a;
+    }
+
+</style>
+
+<!-- JavaScript Logic -->
+<script>
+    const checkboxes = document.querySelectorAll('.seat-checkbox');
+    const selectedInput = document.getElementById('selectedSeatsInput');
+    const nextBtn = document.getElementById('nextBtn');
+    const priceDisplay = document.getElementById('priceDisplay');
+    const seatPrice = {{ flight.base_price }};
+
+    checkboxes.forEach(chk => {
+        chk.addEventListener('change', updateSelection);
+    });
+
+    function updateSelection() {
+        const selected = Array.from(checkboxes)
+            .filter(i => i.checked)
+            .map(i => i.value);
+
+        // Update Hidden Input
+        selectedInput.value = selected.join(',');
+
+        // Update Price and Button
+        const total = selected.length * seatPrice;
+        priceDisplay.innerText = "₹" + total;
+
+        if (selected.length > 0) {
+            nextBtn.disabled = false;
+            nextBtn.innerHTML = `Confirm ${selected.length} Seat(s) <i class="fas fa-arrow-right ms-2"></i>`;
+            nextBtn.classList.remove('btn-warning');
+            nextBtn.classList.add('btn-success');
+        } else {
+            nextBtn.disabled = true;
+            nextBtn.innerHTML = "Select Seats to Proceed";
+            nextBtn.classList.add('btn-warning');
+            nextBtn.classList.remove('btn-success');
+        }
+    }
+</script>
+{% endblock %}
