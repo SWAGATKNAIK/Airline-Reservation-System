@@ -1,30 +1,38 @@
-import joblib
+
 import os
+import joblib
+import pandas as pd
 
 MODEL_PATH = os.path.join(
     os.path.dirname(__file__),
-    "airline_fraud_model.pkl"
+    "real_airline_fraud_model.pkl"
 )
 
 model = joblib.load(MODEL_PATH)
 
+
 def predict_fraud(
-    seats,
     amount,
-    days_before_travel,
-    previous_bookings
+    account_age_days,
+    failed_attempts,
+    session_time_seconds
 ):
+    data = pd.DataFrame([{
+        "amount": amount,
+        "account_age_days": account_age_days,
+        "failed_attempts": failed_attempts,
+        "session_time_seconds": session_time_seconds
+    }])
 
-    data = [[
-        seats,
-        amount,
-        days_before_travel,
-        previous_bookings
-    ]]
+    prediction = int(model.predict(data)[0])
 
-    result = model.predict(data)
+    probabilities = model.predict_proba(data)[0]
 
-    if result[0] == 1:
-        return "High Risk"
+    confidence = float(
+        probabilities[list(model.classes_).index(prediction)] * 100
+    )
 
-    return "Low Risk"
+    return {
+        "risk": "HIGH" if prediction == 1 else "LOW",
+        "confidence": round(confidence, 2)
+    }

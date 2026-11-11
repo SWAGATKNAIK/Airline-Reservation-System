@@ -51,12 +51,19 @@ class Flight(models.Model):
     def __str__(self):
         return f"{self.flight_number}: {self.origin} to {self.destination}"
 
-class Reservation(models.Model):
     
+class Reservation(models.Model):
+
     STATUS_CHOICES = [
         ('PENDING', 'Pending'),
         ('CONFIRMED', 'Confirmed'),
         ('CANCELLED', 'Cancelled'),
+    ]
+
+    FRAUD_CHOICES = [
+        ('NOT_CHECKED', 'Not Checked'),
+        ('LOW', 'Low Risk'),
+        ('HIGH', 'High Risk'),
     ]
 
     passenger = models.ForeignKey(
@@ -76,7 +83,6 @@ class Reservation(models.Model):
     )
 
     booking_id = models.CharField(max_length=20)
-
     seat_number = models.CharField(max_length=10)
 
     status = models.CharField(
@@ -85,16 +91,24 @@ class Reservation(models.Model):
         default='PENDING'
     )
 
-    booked_at = models.DateTimeField(
-        auto_now_add=True
+    booked_at = models.DateTimeField(auto_now_add=True)
+    is_checked_in = models.BooleanField(default=False)
+
+    # Fraud Detection Fields
+    fraud_risk = models.CharField(
+        max_length=20,
+        choices=FRAUD_CHOICES,
+        default='NOT_CHECKED'
     )
 
-    is_checked_in = models.BooleanField(
-        default=False
+    fraud_confidence = models.FloatField(
+        null=True,
+        blank=True
     )
 
     def __str__(self):
         return f"Booking {self.booking_id} - {self.seat_number}"
+
 
     passenger = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reservations')
     # NEW FIELD: To store the actual traveler's name

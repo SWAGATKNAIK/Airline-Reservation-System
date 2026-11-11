@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
+
 from .forms import *
 from .models import *
 from django.utils import timezone
@@ -349,50 +350,80 @@ def search_flights(request):
 #       NEW BOOKING LOGIC STARTS HERE
 # ==========================================
 
+
 @login_required(login_url='login')
 def book_flight_seats(request, flight_id):
     flight = get_object_or_404(Flight, id=flight_id)
-    
-    # Get all currently booked seats for this flight
-    booked_seats = Reservation.objects.filter(flight=flight, status='CONFIRMED').values_list('seat_number', flat=True)
-    
-    # Generate Seat Map Configuration
-    # Assuming 6 seats per row (ABC - DEF)
+
+    # Track booking session start time
+    if 'booking_start_time' not in request.session:
+        request.session['booking_start_time'] = timezone.now().timestamp()
+
+    # Initialize failed booking attempts
+    if 'failed_booking_attempts' not in request.session:
+        request.session['failed_booking_attempts'] = 0
+
+    # Get all currently booked seats
+    booked_seats = Reservation.objects.filter(
+        flight=flight,
+        status='CONFIRMED'
+    ).values_list('seat_number', flat=True)
+
+    # Generate seat map configuration
     total_seats = flight.aircraft.total_economy_seats
     rows = (total_seats // 6) + (1 if total_seats % 6 > 0 else 0)
-    
+
     seat_map = []
     seat_letters = ['A', 'B', 'C', 'D', 'E', 'F']
-    
+
     current_seat_count = 0
+
     for row in range(1, rows + 1):
         row_seats = []
+
         for letter in seat_letters:
             current_seat_count += 1
+
             if current_seat_count > total_seats:
                 break
-                
+
             seat_label = f"{row}{letter}"
             is_booked = seat_label in booked_seats
+
             row_seats.append({
                 'label': seat_label,
                 'is_booked': is_booked
             })
-        seat_map.append({'row_num': row, 'seats': row_seats})
+
+        seat_map.append({
+            'row_num': row,
+            'seats': row_seats
+        })
 
     if request.method == 'POST':
-        selected_seats = request.POST.get('selected_seats') # Comma separated string "1A,1B"
-        if selected_seats:
-            # Save selection to session
-            request.session['booking_seats'] = selected_seats.split(',')
-            return redirect('book_passenger_details', flight_id=flight.id)
-        else:
-            messages.error(request, "Please select at least one seat.")
+        selected_seats = request.POST.get('selected_seats')
 
-    return render(request, 'public/booking_seat_select.html', {
-        'flight': flight,
-        'seat_map': seat_map
-    })
+        if selected_seats:
+            request.session['booking_seats'] = selected_seats.split(',')
+            return redirect(
+                'book_passenger_details',
+                flight_id=flight.id
+            )
+        else:
+            messages.error(
+                request,
+                "Please select at least one seat."
+            )
+
+    return render(
+        request,
+        'public/booking_seat_select.html',
+        {
+            'flight': flight,
+            'seat_map': seat_map
+        }
+    )
+
 
 @login_required(login_url='login')
 def book_passenger_details(request, flight_id):
@@ -420,50 +451,165 @@ def book_passenger_details(request, flight_id):
     })
 
 
+
 @login_required(login_url='login')
 def book_payment(request, flight_id):
+    print("BOOK PAYMENT VIEW CALLED")
+    print("REQUEST METHOD:", request.method)
     flight = get_object_or_404(Flight, id=flight_id)
-    passenger_data = request.session.get('booking_passengers', [])
-    
-    # Redirect if no session data found
-    if not passenger_data:
-        return redirect('book_flight_seats', flight_id=flight.id)
 
+    passenger_data = request.session.get(
+        'booking_passengers', []
+    )
+
+    if not passenger_data:
+        return redirect(
+            'book_flight_seats',
+            flight_id=flight.id
+        )
+    
     total_price = flight.base_price * len(passenger_data)
 
     if request.method == 'POST':
-        # FIX: Generate ONE Booking ID (PNR) for the whole group
-        # This ensures all 3 seats (if selected) share the same Booking Ref
-        pnr = str(uuid.uuid4())[:6].upper() 
-        
+
+        print("PAYMENT BUTTON CLICKED - POST RECEIVED")
+
+        # 1. Generate ML input features
+        amount = float(total_price)
+
+        account_age_days = max(
+            0,
+            (timezone.now() - request.user.date_joined).days
+        )
+
+
+        failed_attempts = request.session.get(
+            'failed_booking_attempts', 0
+        )
+
+        start_time = request.session.get(
+            'booking_start_time'
+        )
+
+        if start_time:
+            session_time_seconds = max(
+                0,
+                timezone.now().timestamp() - float(start_time)
+            )
+        else:
+            session_time_seconds = 0
+
+        # 2. Predict fraud risk
+        try:
+            fraud_result = predict_fraud(
+                amount=amount,
+                account_age_days=account_age_days,
+                failed_attempts=failed_attempts,
+                session_time_seconds=session_time_seconds
+            )
+
+            fraud_risk = fraud_result['risk']
+            fraud_confidence = fraud_result['confidence']
+
+        except Exception as e:
+            print("Fraud prediction error:", e)
+
+            messages.error(
+                request,
+                "Fraud detection failed. Please try again."
+            )
+
+            return redirect(
+                'book_payment',
+                flight_id=flight.id
+            )
+
+        # 3. Generate booking ID
+        pnr = str(uuid.uuid4())[:6].upper()
+
+        # 4. Save reservations with ML prediction
         booked_count = 0
+
         for p in passenger_data:
+
             Reservation.objects.create(
                 passenger=request.user,
                 passenger_name=p['name'],
                 flight=flight,
-                booking_id=pnr, # Use the shared PNR here
+                booking_id=pnr,
                 seat_number=p['seat'],
-                status='CONFIRMED'
-            )
-            booked_count += 1
-        
-        # Clear session
-        if 'booking_seats' in request.session:
-            del request.session['booking_seats']
-        if 'booking_passengers' in request.session:
-            del request.session['booking_passengers']
-        
-        return redirect('book_success', booking_count=booked_count)
+                status='CONFIRMED',
 
-    return render(request, 'public/booking_payment.html', {
-        'flight': flight,
-        'passenger_data': passenger_data,
-        'total_price': total_price
-    })
+                fraud_risk=fraud_risk,
+                fraud_confidence=fraud_confidence
+            )
+
+            booked_count += 1
+
+        # 5. Save booking ID for success page
+        request.session['last_booking_id'] = pnr
+
+        # 6. Clear booking session
+        for key in [
+            'booking_seats',
+            'booking_passengers',
+            'booking_start_time',
+            'failed_booking_attempts'
+        ]:
+            request.session.pop(key, None)
+
+        messages.success(
+            request,
+            f"Booking completed. Fraud Risk: {fraud_risk}"
+        )
+
+        return redirect(
+            'book_success',
+            booking_count=booked_count
+        )
+
+    return render(
+        request,
+        'public/booking_payment.html',
+        {
+            'flight': flight,
+            'passenger_data': passenger_data,
+            'total_price': total_price
+        }
+    )
+
+
 @login_required(login_url='login')
 def book_success(request, booking_count):
-    return render(request, 'public/booking_success.html', {'count': booking_count})
+
+    booking_id = request.session.get('last_booking_id')
+
+    reservations = Reservation.objects.filter(
+        booking_id=booking_id,
+        passenger=request.user
+    ) if booking_id else Reservation.objects.none()
+
+    first_reservation = reservations.first()
+
+    context = {
+        'count': booking_count,
+        'fraud_risk': (
+            first_reservation.get_fraud_risk_display()
+            if first_reservation else 'Not Available'
+        ),
+        'fraud_confidence': (
+            first_reservation.fraud_confidence
+            if first_reservation else None
+        ),
+        'booking_id': booking_id,
+    }
+
+    return render(
+        request,
+        'public/booking_success.html',
+        context
+    )
+
 
 
 
